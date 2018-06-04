@@ -1,5 +1,5 @@
 import numpy as np
-from kimpy.calculator import KIMModelCalculator
+from kimcalculator import KIMCalculator
 from ase.lattice.cubic import SimpleCubic, FaceCenteredCubic
 import pytest
 
@@ -14,8 +14,9 @@ forces_ref = np.array([[ -7.23227863, -139.33816177, -139.33816177],
 def test_forces():
 
   # create calculator
-  modelname = 'ex_model_Ar_P_MLJ_C'
-  calc = KIMModelCalculator(modelname)
+  #modelname = 'ex_model_Ar_P_MLJ_C'
+  modelname = 'ex_model_Ar_P_LJ'
+  calc = KIMCalculator(modelname, debug=True)
 
   # create an FCC crystal
   argon = FaceCenteredCubic(directions=[[1,0,0], [0,1,0], [0,0,1]], size=(1,1,1),
@@ -32,6 +33,8 @@ def test_forces():
   forces = argon.get_forces()
 
   tol = 1e-6
+  print energy
+  print forces
   assert energy == pytest.approx(energy_ref, tol)
   assert forces == pytest.approx(forces_ref, tol)
 

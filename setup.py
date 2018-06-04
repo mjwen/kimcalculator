@@ -9,7 +9,7 @@ for key, value in cfg_vars.items():
     cfg_vars[key] = value.replace('-Wstrict-prototypes', '')
 
 
-def get_version(fname='__init__.py'):
+def get_version(fname='kimcalculator.py'):
   with open(fname) as fin:
     for line in fin:
       line = line.strip()
@@ -26,7 +26,6 @@ def get_version(fname='__init__.py'):
 
 setup(name = 'kimcalculator',
   version = get_version(),
-  packages = ['kimcalculator'],
   install_requires = ['numpy', 'ase'],
 
   # metadata
@@ -34,6 +33,6 @@ setup(name = 'kimcalculator',
   author_email = 'wenxx151[at]umn.edu',
   url = 'https://github.com/mjwen/kimcalculator',
   description = 'An ASE calculator to work with KIM interatomic potentials',
-  zip_safe = False,
+  #zip_safe = False,
 )
 

@@ -1,8 +1,8 @@
 build/
 dist/
-ase_kim_calculator.egg-info/
 *.so
 *.pyc
 .eggs
-kimpy.egg-info
+*.egg-info
 kim.log
+tests/config.xyz
