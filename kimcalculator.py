@@ -580,9 +580,9 @@ def write_extxyz(cell, species, coords, fname='config.xyz'):
       report_error(msg)
     for i in range(natoms):
       fout.write('{:<d} '.format(species[i]))
-      fout.write('{:12.5e} '.format(coords[3][0]))
-      fout.write('{:12.5e} '.format(coords[3][1]))
-      fout.write('{:12.5e}\n'.format(coords[3][2]))
+      fout.write('{:12.5e} '.format(coords[i][0]))
+      fout.write('{:12.5e} '.format(coords[i][1]))
+      fout.write('{:12.5e}\n'.format(coords[i][2]))
 
 
 class KIMCalculatorError(Exception):

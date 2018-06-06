@@ -1,21 +1,24 @@
+"""
+To test that the calculator can produce correct energy and forces.
+"""
+
 import numpy as np
 from kimcalculator import KIMCalculator
 from ase.lattice.cubic import SimpleCubic, FaceCenteredCubic
 import pytest
 
-energy_ref = 112.921634093
-
-forces_ref = np.array([[ -7.23227863, -139.33816177, -139.33816177],
-                       [  3.77011623,  139.34545864, -139.24229951],
-                       [  3.77011623, -139.24229951,  139.34545864],
-                       [ -0.30795382,  139.23500265,  139.23500265]]
-                     )
+energy_ref = 19.7196709065
+forces_ref = np.array(
+  [[ -0.33209865,  -13.98929271,  -13.98929271],
+   [  0.18090261,   13.9896848 ,  -13.98691618],
+   [  0.18090261,  -13.98691618,   13.9896848 ],
+   [ -0.02970657,   13.98652409,   13.98652409]]
+)
 
 def test_forces():
 
   # create calculator
-  #modelname = 'ex_model_Ar_P_MLJ_C'
-  modelname = 'ex_model_Ar_P_LJ'
+  modelname = 'ex_model_Ar_P_Morse_07C'
   calc = KIMCalculator(modelname, debug=True)
 
   # create an FCC crystal
@@ -33,8 +36,6 @@ def test_forces():
   forces = argon.get_forces()
 
   tol = 1e-6
-  print energy
-  print forces
   assert energy == pytest.approx(energy_ref, tol)
   assert forces == pytest.approx(forces_ref, tol)
 
