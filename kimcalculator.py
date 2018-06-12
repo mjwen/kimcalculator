@@ -189,6 +189,8 @@ class KIMCalculator(Calculator):
       print('Model influence distance:', model_influence_dist)
       print('Number of cutoffs:', model_cutoffs.size)
       print('Model cutoffs:', model_cutoffs)
+      print('Calculator cutoff (include skin):', self.cutoff)
+      print('Calculator cutoff skin:', self.skin)
       print()
 
     self.kim_initialized = True
@@ -239,6 +241,7 @@ class KIMCalculator(Calculator):
     self.neigh_initialized = True
 
 
+
   def update_kim(self, atoms):
     """ Register model input and output data pointers.
 
@@ -276,6 +279,11 @@ class KIMCalculator(Calculator):
     error = self.compute_arguments.set_argument_pointer(
         kimpy.compute_argument_name.partialForces, self.forces)
     check_error(error, 'kimpy.compute_argument.set_argument_pointer')
+
+    if self.debug:
+      print ('Debug: called update_kim')
+      print()
+
 
 
   def update_neigh(self, atoms):
@@ -343,6 +351,11 @@ class KIMCalculator(Calculator):
     error = nl.build(self.neigh, self.cutoff, self.coords, need_neigh)
     check_error(error, 'nl.build')
 
+    if self.debug:
+      print ('Debug: called update_neigh')
+      print()
+
+
 
   def update_kim_coords(self, atoms):
     """Update the atom positions in self.coords, which is registered in KIM.
@@ -352,7 +365,6 @@ class KIMCalculator(Calculator):
 
     atoms: ASE Atoms instance
     """
-
     if self.padding_image_of.size != 0:
       # displacement of contributing atoms
       disp_contrib = atoms.positions - self.last_update_positions
@@ -361,9 +373,13 @@ class KIMCalculator(Calculator):
       # displacement of all atoms
       disp = np.concatenate((disp_contrib, disp_pad))
       # update coords in KIM
-      self.kim_coords += disp
+      self.coords += disp
     else:
-      np.copyto(self.kim_coords, atoms.positions)
+      np.copyto(self.coords, atoms.positions)
+
+    if self.debug:
+      print ('Debug: called update_kim_coords')
+      print()
 
 
   def calculate(self, atoms=None,
@@ -405,9 +421,7 @@ class KIMCalculator(Calculator):
       if need_update_neigh:
         self.update_neigh(atoms)
         self.update_kim(atoms)
-        self.last_update_positions = atoms.positions
-        if self.debug:
-          print ('neighbor list updated')
+        self.last_update_positions = atoms.get_positions() # should make a copy
       else:
         self.update_kim_coords(atoms)
 

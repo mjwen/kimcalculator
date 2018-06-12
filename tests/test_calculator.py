@@ -1,8 +1,13 @@
+"""
+Test the calculator can be attached to multiple Atoms object.
+"""
+
 from __future__ import print_function
 import numpy as np
-from kimpy.calculator import KIMModelCalculator
+from kimcalculator import KIMCalculator
 from ase.lattice.cubic import SimpleCubic, FaceCenteredCubic
 import time
+
 
 def print_values(atoms, msg):
   # compute energy and forces
@@ -22,8 +27,10 @@ def print_values(atoms, msg):
 def test_calculator():
 
   # create calculator
-  modelname = 'ex_model_Ar_P_MLJ_C'
-  calc = KIMModelCalculator(modelname)
+  #modelname = 'ex_model_Ar_P_MLJ_C'
+  modelname = 'ex_model_Ar_P_Morse_07C'
+
+  calc = KIMCalculator(modelname)
 
   # create a SC cyrstal
   argon = SimpleCubic(directions=[[1,0,0], [0,1,0], [0,0,1]], size=(2,2,2),
