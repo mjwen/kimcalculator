@@ -74,30 +74,13 @@ class KIMCalculator(Calculator):
     self.kim_initialized = False
     self.neigh_initialized = False
 
+    # initialize KIM
+    self.init_kim()
 
-  def set_atoms(self, atoms):
-    """Initialize KIM and neighbor list.
-    This is called by set_calculator() of Atoms instance.
 
-    Note that set_calculator() may be called multiple times by different Atoms instance.
 
-    Parameter
-    ---------
-
-    atoms: ASE Atoms instance
-    """
-    self.init_kim(atoms)
-    self.init_neigh(atoms)  #TODO since this can be attached to different atoms object,
-                            # think about use different compute_arguments for each
-                            # may not be good
-
-  def init_kim(self, atoms):
+  def init_kim(self):
     """Initialize KIM.
-
-    Parameter
-    ---------
-
-    atoms: ASE Atoms instance
     """
 
     if self.kim_initialized:
@@ -212,6 +195,23 @@ class KIMCalculator(Calculator):
 
 
 
+  def set_atoms(self, atoms):
+    """Initialize KIM and neighbor list.
+    This is called by set_calculator() of Atoms instance.
+
+    Note that set_calculator() may be called multiple times by different Atoms instance.
+
+    Parameter
+    ---------
+
+    atoms: ASE Atoms instance
+    """
+    self.init_neigh(atoms)  #TODO since this can be attached to different atoms object,
+                            # think about use different compute_arguments for each
+                            # may not be good
+
+
+
   def init_neigh(self, atoms):
     """Initialize neighbor list.
 
@@ -276,7 +276,6 @@ class KIMCalculator(Calculator):
     error = self.compute_arguments.set_argument_pointer(
         kimpy.compute_argument_name.partialForces, self.forces)
     check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
 
 
   def update_neigh(self, atoms):
@@ -434,7 +433,19 @@ class KIMCalculator(Calculator):
 
 
   def get_kim_model_supported_species(self):
-    return get_model_species_list(self.modelname)
+    """Get all the supported species by a model.
+
+    Return: list of str
+      a list of species
+    """
+    species = []
+    for key, value in species_name_map.iteritems():
+      species_support, code, error = self.kim_model.get_species_support_and_code(value)
+      check_error(error, 'kim_model.get_species_support_and_code')
+      if species_support:
+        species.append(key)
+    return species
+
 
 
   def __expr__(self):
@@ -457,45 +468,6 @@ class KIMCalculator(Calculator):
       # free kim model
       kimpy.model.destroy(self.kim_model)
 
-
-
-def get_model_species_list(modelname):
-  """Create a temporary KIM object to inqure the supported species of the model.
-
-  Return
-  ------
-
-  species_list: list of str
-    A list of all the supported species by the KIM model.
-  """
-
-  pkim, status = km.model_info(modelname)
-  if status != km.STATUS_OK:
-    #km.report_error('km.model_info', status)
-    raise KIMCalculatorError('km.model_info')
-
-  # number of model species
-  numberSpecies, maxStrLen, status = km.get_num_model_species(pkim)
-  if status != km.STATUS_OK:
-    #km.report_error('km.get_num_model_species', status)
-    raise KIMCalculatorError('km.get_num_model_species')
-
-  # get species list
-  species_list = []
-  for i in xrange(numberSpecies):
-    spec, status = km.get_model_species(pkim, i)
-    if status != km.STATUS_OK:
-      #km.report_error('km.get_model_species', status)
-      raise KIMCalculatorError('km.get_model_species')
-    species_list.append(spec)
-
-  # destroy the temporary model and the KIM object
-  status = km.free(pkim)
-  if status != km.STATUS_OK:
-    #km.report_error('km.free', status)
-    raise KIMCalculatorError('km.free')
-
-  return species_list
 
 
 def assemble_padding_forces(forces, num_contributing, padding_image_of):
