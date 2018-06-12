@@ -1,68 +1,55 @@
 # OpenKIM ASE calculator
 
-An Atomic Simulation Environemnt (ASE) calculator based on the Knowledgebase
-of Interatomic Models.
+An Atomic Simulation Environemnt (ASE) calculator that works with Knowledgebase of Interatomic Models (KIM).
 
 ## Installation
-
-0. Virtual environment (Optional)
-
-Create a virtual environment using `conda` (see [here](https://conda.io/miniconda.html)
-for more information about `conda` and `Miniconda`)
-
-    $ conda create -n kimpy
-
-and then activate the environment
-
-    $ source activate kimpy
 
 1. install from source
 
 Clone this repo
 
-    $ git clone https://github.com/mjwen/kimpy.git
+    $ git clone https://github.com/mjwen/kimcalculator.git
 
 and then install by
 
-    $ pip install ./kimpy
+    $ pip install -e ./kimcalculator
 
 2. pip (to come)
 
 3. conda (to come)
 
-TO check that `kimpy` is sussessfully installed, you can do
+To check that `kimcalculator` is sussessfully installed, do
 
-    $ cd kimpy/tests
+    $ cd kimcalculator/tests
     $ pytest
 
 and you will get something like
 ```
 ...
-collected 2 items
+collected 5 items
 
+test_1D.py .
 test_calculator.py .
-test_report_error.py .
+test_forces.py .
+test_get_model_species.py .
+test_update_neigh.py .
 
-==================== 2 passed in 0.18 seconds ====================
+==================== 5 passed in 0.26 seconds ====================
 ```
 
 ## Example
 
-After successfully intalling the `simpy` package, the ASE calculator can be
-imported from the `calculator` module as
+After installation,  the `KIMCalculator` can be imported from the `kimcalculator` module by
 
-    from kimpy.calculator import KIMModelCalculator
+    from kimcalculator import KIMCalculator
 
-The floowing code snippet (`test_argon.py`) shows how to compute the potential
-energy and forces of a FCC crystal using the KIM ASE calculator with the KIM
-potentail `ex_model_Ar_P_MLJ_C` (get more KIM potenital Models
-[here](https://openkim.org/intro-models/)).
+The floowing code snippet (`test_argon.py`) shows how to compute the potential energy and forces of an FCC crystal with the KIM potentail `ex_model_Ar_P_Morse_07C`.
 
 ```python
 from __future__ import print_function
 import numpy as np
-from kimpy.calculator import KIMModelCalculator
 from ase.lattice.cubic import SimpleCubic
+from kimcalculator import KIMCalculator
 
 def test_calculator():
 
@@ -71,8 +58,8 @@ def test_calculator():
                       symbol='Ar', pbc=(1,1,0), latticeconstant=3.0)
 
   # create calculator
-  modelname = 'ex_model_Ar_P_MLJ_C'
-  calc = KIMModelCalculator(modelname)
+  modelname = 'ex_model_Ar_P_Morse_07C'
+  calc = KIMCalculator(modelname)
 
   # attach calculator to atoms
   argon.set_calculator(calc)
@@ -84,7 +71,7 @@ def test_calculator():
   print('KIM model:', modelname)
   print('\ncoords:\n', pos)
   print('\nenergy:\n', energy)
-  print('\nforces:\n', np.reshape(forces, (-1, 3)))
+  print('\nforces:\n', forces)
 
 if __name__ == '__main__':
   test_calculator()
@@ -93,3 +80,7 @@ if __name__ == '__main__':
 Run this code snippet by
 
     $ python test_argon.py
+
+## Contact
+
+Mingjian Wen (wenxx151@umn.edu)
