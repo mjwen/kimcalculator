@@ -353,17 +353,17 @@ class KIMCalculator(Calculator):
     atoms: ASE Atoms instance
     """
 
-    # displacement of contributing atoms
-    disp_contrib = atoms.positions - self.last_update_positions
     if self.padding_image_of.size != 0:
+      # displacement of contributing atoms
+      disp_contrib = atoms.positions - self.last_update_positions
       # displacement of padding atoms
       disp_pad = disp_contrib[self.padding_image_of]
       # displacement of all atoms
-      disp = np.concatenate((disp_contrib, disp_pad)).ravel().astype(np.double)
+      disp = np.concatenate((disp_contrib, disp_pad))
+      # update coords in KIM
+      self.kim_coords += disp
     else:
-      disp = disp_contrib.ravel().astype(np.double)
-    # update coords in KIM
-    self.km_coords += disp
+      np.copyto(self.kim_coords, atoms.positions)
 
 
   def calculate(self, atoms=None,
@@ -411,15 +411,12 @@ class KIMCalculator(Calculator):
       else:
         self.update_kim_coords(atoms)
 
-      error = self.kim_model.compute(self.compute_arguments)
+      release_GIL = False
+      if 'GIL' in atoms.info:
+        if atoms.info['GIL'] == 'off':
+          release_GIL = True
+      error = self.kim_model.compute(self.compute_arguments, release_GIL)
       check_error(error, 'kim_model.compute')
-
-      ## TODO define a new binding function to deal with this
-      #release_GIL = False
-      #if 'GIL' in atoms.info:
-      #  if atoms.info['GIL'] == 'off':
-      #    release_GIL = True
-      #status = km.model_compute(self.pkim, release_GIL)
 
     energy = self.energy[0]
     forces = self.forces
