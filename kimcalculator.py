@@ -122,7 +122,7 @@ class KIMCalculator(Calculator):
 
 
     # check compute arguments
-    num_compute_arguments = kimpy.compute_argument_name.get_number_of_compute_arguments()
+    num_compute_arguments = kimpy.compute_argument_name.get_number_of_compute_argument_names()
     if self.debug:
       print('Number of compute_arguments:', num_compute_arguments)
 
@@ -153,7 +153,7 @@ class KIMCalculator(Calculator):
 
 
     #check compute callbacks
-    num_callbacks = kimpy.compute_callback_name.get_number_of_compute_callbacks()
+    num_callbacks = kimpy.compute_callback_name.get_number_of_compute_callback_names()
     if self.debug:
       print()
       print('Number of callbacks:', num_callbacks)
@@ -232,7 +232,6 @@ class KIMCalculator(Calculator):
     # register get neigh callback
     error = self.compute_arguments.set_callback_pointer(
         kimpy.compute_callback_name.GetNeighborList,
-        kimpy.language_name.cpp,  #TODO ask Ryan to add python
         nl.get_neigh_kim(),
         neigh
       )
