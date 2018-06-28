@@ -128,13 +128,13 @@ class KIMCalculator(Calculator):
 
     for i in range(num_compute_arguments):
       name,error = kimpy.compute_argument_name.get_compute_argument_name(i)
-      check_error(error, 'kim_model.get_compute_argument_name')
+      check_error(error, 'kimpy.compute_argument_name.get_compute_argument_name')
 
       dtype,error = kimpy.compute_argument_name.get_compute_argument_data_type(name)
-      check_error(error, 'kim_model.get_compute_argument_data_type')
+      check_error(error, 'kimpy.compute_argument_name.get_compute_argument_data_type')
 
       support_status, error = self.compute_arguments.get_argument_support_status(name)
-      check_error(error, 'compute_argument.get_argument_support_status')
+      check_error(error, 'compute_arguments.get_argument_support_status')
 
       if self.debug:
         n_space_1 = 21 - len(str(name))
@@ -144,11 +144,13 @@ class KIMCalculator(Calculator):
               'and has support status "{}".'.format(support_status) )
 
       # can handle energy, force, particle energy, and virial as a required arg
+      # TODO add support for particleEenrgy and Virial
       if support_status == kimpy.support_status.required:
-        if (name != kimpy.compute_argument_name.partialEnergy or
-            name != kimpy.compute_argument_name.partialForces or
-            name != kimpy.compute_argument_name.partialParticleEnergy or
-            name != kimpy.compute_argument_name.partialVirial):
+        if (name != kimpy.compute_argument_name.partialEnergy and
+            name != kimpy.compute_argument_name.partialForces #and
+            #name != kimpy.compute_argument_name.partialParticleEnergy and
+            #name != kimpy.compute_argument_name.partialVirial
+        ):
           report_error('Unsupported required ComputeArgument {}'.format(name))
 
 
@@ -161,10 +163,10 @@ class KIMCalculator(Calculator):
     for i in range(num_callbacks):
 
       name,error = kimpy.compute_callback_name.get_compute_callback_name(i)
-      check_error(error, 'kim_model.get_compute_callback_name')
+      check_error(error, 'kimpy.compute_callback_name.get_compute_callback_name')
 
       support_status, error = self.compute_arguments.get_callback_support_status(name)
-      check_error(error, 'compute_argument.get_callback_support_status')
+      check_error(error, 'compute_arguments.get_callback_support_status')
 
       if self.debug:
         n_space = 18 - len(str(name))
@@ -235,53 +237,9 @@ class KIMCalculator(Calculator):
         nl.get_neigh_kim(),
         neigh
       )
-    check_error(error, 'kimpy.compute_argument.set_callback_pointer')
+    check_error(error, 'compute_arguments.set_callback_pointer')
 
     self.neigh_initialized = True
-
-
-
-  def update_kim(self, atoms):
-    """ Register model input and output data pointers.
-
-    Parameter
-    ---------
-
-    atoms: ASE Atoms instance
-    """
-
-    # model output
-    self.energy = np.array([0.], dtype=np.double)
-    self.forces = np.zeros([self.num_particles[0], 3], dtype=np.double)
-
-    # register argument
-    error = self.compute_arguments.set_argument_pointer(
-        kimpy.compute_argument_name.numberOfParticles, self.num_particles)
-    check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
-    error = self.compute_arguments.set_argument_pointer(
-        kimpy.compute_argument_name.particleSpeciesCodes, self.species_code)
-    check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
-    error = self.compute_arguments.set_argument_pointer(
-        kimpy.compute_argument_name.particleContributing, self.particle_contributing)
-    check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
-    error = self.compute_arguments.set_argument_pointer(
-        kimpy.compute_argument_name.coordinates, self.coords)
-    check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
-    error = self.compute_arguments.set_argument_pointer(
-        kimpy.compute_argument_name.partialEnergy, self.energy)
-    check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
-    error = self.compute_arguments.set_argument_pointer(
-        kimpy.compute_argument_name.partialForces, self.forces)
-    check_error(error, 'kimpy.compute_argument.set_argument_pointer')
-
-    if self.debug:
-      print ('Debug: called update_kim')
-      print()
 
 
 
@@ -356,6 +314,45 @@ class KIMCalculator(Calculator):
 
 
 
+  def update_kim(self):
+    """ Register model input and output data pointers.
+    """
+
+    # model output
+    self.energy = np.array([0.], dtype=np.double)
+    self.forces = np.zeros([self.num_particles[0], 3], dtype=np.double)
+
+    # register argument
+    error = self.compute_arguments.set_argument_pointer(
+        kimpy.compute_argument_name.numberOfParticles, self.num_particles)
+    check_error(error, 'kimpy.compute_argument_name.set_argument_pointer')
+
+    error = self.compute_arguments.set_argument_pointer(
+        kimpy.compute_argument_name.particleSpeciesCodes, self.species_code)
+    check_error(error, 'kimpy.compute_argument_name.set_argument_pointer')
+
+    error = self.compute_arguments.set_argument_pointer(
+        kimpy.compute_argument_name.particleContributing, self.particle_contributing)
+    check_error(error, 'kimpy.compute_argument_name.set_argument_pointer')
+
+    error = self.compute_arguments.set_argument_pointer(
+        kimpy.compute_argument_name.coordinates, self.coords)
+    check_error(error, 'kimpy.compute_argument_name.set_argument_pointer')
+
+    error = self.compute_arguments.set_argument_pointer(
+        kimpy.compute_argument_name.partialEnergy, self.energy)
+    check_error(error, 'kimpy.compute_argument_name.set_argument_pointer')
+
+    error = self.compute_arguments.set_argument_pointer(
+        kimpy.compute_argument_name.partialForces, self.forces)
+    check_error(error, 'kimpy.compute_argument_name.set_argument_pointer')
+
+    if self.debug:
+      print ('Debug: called update_kim')
+      print()
+
+
+
   def update_kim_coords(self, atoms):
     """Update the atom positions in self.coords, which is registered in KIM.
 
@@ -419,7 +416,7 @@ class KIMCalculator(Calculator):
     if system_changes:
       if need_update_neigh:
         self.update_neigh(atoms)
-        self.update_kim(atoms)
+        self.update_kim()
         self.last_update_positions = atoms.get_positions() # should make a copy
       else:
         self.update_kim_coords(atoms)
