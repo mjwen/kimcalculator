@@ -2,6 +2,7 @@ import numpy as np
 from kimcalculator import KIMCalculator
 from ase import Atoms
 import pytest
+from assert_array import assert_2d_array
 
 energy_ref = 71.8572003737
 forces_ref =np.array(
@@ -25,7 +26,7 @@ def test_1D():
   print energy
   print forces
   assert energy == pytest.approx(energy_ref, tol)
-  assert forces == pytest.approx(forces_ref, tol)
+  assert_2d_array(forces, forces_ref, tol)
 
 if __name__ == '__main__':
   test_1D()

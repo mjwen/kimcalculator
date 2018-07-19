@@ -3,9 +3,11 @@ To test that the calculator can produce correct energy and forces.
 """
 
 import numpy as np
+import pytest
 from kimcalculator import KIMCalculator
 from ase.lattice.cubic import SimpleCubic, FaceCenteredCubic
-import pytest
+from assert_array import assert_2d_array
+
 
 energy_ref = 19.7196709065
 forces_ref = np.array(
@@ -37,7 +39,7 @@ def test_forces():
 
   tol = 1e-6
   assert energy == pytest.approx(energy_ref, tol)
-  assert forces == pytest.approx(forces_ref, tol)
+  assert_2d_array(forces, forces_ref, tol)
 
 
 if __name__ == '__main__':

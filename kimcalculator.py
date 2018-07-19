@@ -22,9 +22,6 @@ class KIMCalculator(Calculator):
   neigh_skin_ratio: double
     The neighbor list is build using r_neigh = (1+neigh_skin_ratio)*rcut.
 
-  padding_need_neigh: bool
-    Flag to indicate whether need to create neighbors for padding atoms.
-
   debug: bool
     Flag to indicate whether to enable debug mode to print extra information.
   """
@@ -33,9 +30,8 @@ class KIMCalculator(Calculator):
   implemented_properties = ['energy', 'forces']
 
 
-  def __init__(self, modelname, neigh_skin_ratio=0.2, padding_need_neigh=False,
-               debug=False, **kwargs):
-    Calculator.__init__(self, **kwargs)
+  def __init__(self, modelname, neigh_skin_ratio=0.2, debug=False, *args, **kwargs):
+    super(KIMCalculator, self).__init__(*args, **kwargs)
 
     self.modelname = modelname
     self.debug = debug
@@ -50,7 +46,7 @@ class KIMCalculator(Calculator):
     self.last_update_positions = None
 
     # padding atoms related
-    self.padding_need_neigh = padding_need_neigh
+    self.padding_need_neigh = None
     self.num_contributing_particles = None
     self.num_padding_particles = None
     self.padding_image_of = None
@@ -182,18 +178,29 @@ class KIMCalculator(Calculator):
     model_influence_dist = kim_model.get_influence_distance()
     self.skin = self.neigh_skin_ratio * model_influence_dist
     self.cutoff = (1+self.neigh_skin_ratio) * model_influence_dist
+
     # TODO we need to make changes to support multiple cutoffs
-    model_cutoffs = kim_model.get_neighbor_list_cutoffs()
+    model_cutoffs,padding_hints,half_hints = kim_model.get_neighbor_list_cutoffs_and_hints()
+
     if(model_cutoffs.size != 1):
       report_error('too many cutoffs')
+
+    if padding_hints[0] == 0:
+      self.padding_need_neigh = True
+    else:
+      self.padding_need_neigh = False
+
     if self.debug:
       print()
       print('Model influence distance:', model_influence_dist)
       print('Number of cutoffs:', model_cutoffs.size)
       print('Model cutoffs:', model_cutoffs)
+      print('Model padding neighbors hints:', padding_hints)
+      print('Model half list hints:', half_hints)
       print('Calculator cutoff (include skin):', self.cutoff)
       print('Calculator cutoff skin:', self.skin)
       print()
+
 
     self.kim_initialized = True
 
