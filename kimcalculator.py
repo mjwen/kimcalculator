@@ -9,7 +9,7 @@ __version__ = '2.0.0'
 __author__ = 'Mingjian Wen'
 
 
-class KIMCalculator(Calculator):
+class KIMCalculator(Calculator, object):
   """ An ASE calculator to work with KIM interatomic models.
 
   Parameter
