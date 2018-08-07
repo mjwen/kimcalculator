@@ -5,7 +5,7 @@ import kimpy
 import neighlist as nl
 
 
-__version__ = '2.0.0'
+__version__ = '0.1.0'
 __author__ = 'Mingjian Wen'
 
 
@@ -25,8 +25,7 @@ class KIMCalculator(Calculator, object):
     Flag to indicate whether to enable debug mode to print extra information.
   """
 
-  # TODO we can support `potential_energies` and `stress` as well, depending on KIM model
-  implemented_properties = ['energy', 'forces']
+  implemented_properties = ['energy', 'forces', 'stress']
 
 
   def __init__(self, modelname, neigh_skin_ratio=0.2, debug=False, *args, **kwargs):
@@ -61,7 +60,6 @@ class KIMCalculator(Calculator, object):
     self.coords = None
 
     # model output
-    # TODO we may want to support potential_energies and stress as well
     self.energy = None
     self.forces = None
 
@@ -82,8 +80,6 @@ class KIMCalculator(Calculator, object):
       return
 
     # create model
-    # TODO check what unit system ASE works with
-    # TODO ask Ryan can we pass `unused`. Well we can test it
     units_accepted, kim_model, error = kimpy.model.create(
        kimpy.numbering.zeroBased,
        kimpy.length_unit.A,
@@ -138,13 +134,11 @@ class KIMCalculator(Calculator, object):
               'is of type "{}" '.format(dtype) + ' '*n_space_2 +
               'and has support status "{}".'.format(support_status) )
 
-      # can handle energy, force, particle energy, and virial as a required arg
-      # TODO add support for particleEenrgy and Virial
+      # the simulator can handle energy and force from a kim model
+      # virial is computed within the calculator
       if support_status == kimpy.support_status.required:
         if (name != kimpy.compute_argument_name.partialEnergy and
-            name != kimpy.compute_argument_name.partialForces #and
-            #name != kimpy.compute_argument_name.partialParticleEnergy and
-            #name != kimpy.compute_argument_name.partialVirial
+            name != kimpy.compute_argument_name.partialForces
         ):
           report_error('Unsupported required ComputeArgument {}'.format(name))
 
@@ -178,7 +172,7 @@ class KIMCalculator(Calculator, object):
     self.skin = self.neigh_skin_ratio * model_influence_dist
     self.cutoff = (1+self.neigh_skin_ratio) * model_influence_dist
 
-    # TODO we need to make changes to support multiple cutoffs
+    # TODO support multiple cutoffs
     model_cutoffs,padding_hints,half_hints = kim_model.get_neighbor_list_cutoffs_and_hints()
 
     if(model_cutoffs.size != 1):
@@ -216,9 +210,7 @@ class KIMCalculator(Calculator, object):
 
     atoms: ASE Atoms instance
     """
-    self.init_neigh(atoms)  #TODO since this can be attached to different atoms object,
-                            # think about use different compute_arguments for each
-                            # may not be good
+    self.init_neigh(atoms)
 
 
 
@@ -386,7 +378,7 @@ class KIMCalculator(Calculator, object):
 
 
   def calculate(self, atoms=None,
-                properties=['energy'],
+                properties=['energy', 'forces', 'stress'],
                 system_changes=['positions', 'numbers', 'cell', 'pbc']):
     """
     Inherited method from the ase Calculator class that is called by get_property().
@@ -398,7 +390,7 @@ class KIMCalculator(Calculator, object):
 
     properties: list of str
       List of what needs to be calculated.  Can be any combination
-      of 'energy' and 'forces'.
+      of 'energy', 'forces', and 'stress'.
 
     system_changes: list of str
       List of what has changed since last calculation.  Can be
@@ -436,13 +428,15 @@ class KIMCalculator(Calculator, object):
       check_error(error, 'kim_model.compute')
 
     energy = self.energy[0]
-    forces = self.forces
-    forces = assemble_padding_forces(forces, self.num_contributing_particles,
+    forces = assemble_padding_forces(self.forces, self.num_contributing_particles,
         self.padding_image_of)
+    stress = compute_virial_stress(self.forces, self.coords)
+
 
     # return values
     self.results['energy'] = energy
     self.results['forces'] = forces
+    self.results['stress'] = stress
 
 
 
@@ -532,6 +526,33 @@ def assemble_padding_forces(forces, num_contributing, padding_image_of):
   return total_forces
 
 
+def compute_virial_stress(forces, coords):
+  """Compute the virial stress in vogit notation.
+
+  Parameters
+  ----------
+
+    forces: 2D array
+      forces on all atoms (padding included)
+
+    coords: 2D array
+      coordinates of all atoms (padding included)
+
+  Returns
+  -------
+    stress: 1D array
+      stress in Voigt order (xx, yy, zz, yz, xz, xy)
+  """
+  stress = np.zeros(6)
+  stress[0] = -np.dot(forces[:,0], coords[:,0])
+  stress[1] = -np.dot(forces[:,1], coords[:,1])
+  stress[2] = -np.dot(forces[:,2], coords[:,2])
+  stress[3] = -np.dot(forces[:,1], coords[:,2])
+  stress[4] = -np.dot(forces[:,0], coords[:,2])
+  stress[5] = -np.dot(forces[:,0], coords[:,1])
+
+  return stress
+
 
 def write_extxyz(cell, species, coords, fname='config.xyz'):
   """Output configurations as xyz file.
@@ -574,6 +595,9 @@ def write_extxyz(cell, species, coords, fname='config.xyz'):
       fout.write('{:12.5e} '.format(coords[i][0]))
       fout.write('{:12.5e} '.format(coords[i][1]))
       fout.write('{:12.5e}\n'.format(coords[i][2]))
+
+
+
 
 
 class KIMCalculatorError(Exception):
